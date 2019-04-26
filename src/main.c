@@ -677,11 +677,7 @@ main(int argc, char *argv[])
     file_name = *(argv + optind);
     n_files = argc - optind;
     if ( n_files > 1 )
-    {
-        fprintf(stderr, "More than one file specified");
-        usage(true);
-        return 1;
-    }
+        error_exit("More than one file specified");
 
     /* Print public key */
     if ( flags.p )
