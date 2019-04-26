@@ -11,7 +11,7 @@ Function as a lightweight encryption utility where the binary and the user's pub
 This utility uses Libsodium that is a fork of [NaCl](http://nacl.cr.yp.to/). It utilize [XSalsa20](https://en.wikipedia.org/wiki/Salsa20#XSalsa20_with_192-bit_nonce) for public key encryption and [Poly1305](https://en.wikipedia.org/wiki/Poly1305) for data integrity.
 
 ## Why not GPG?
-Well, I do actually recommend you to use GPG and not this tool! The creating of this utility was primarily an exercise in C for the author and only intended to be a small and easy to use utility.
+Well, I do actually recommend you to use GPG for public key encryption and not this tool! The creating of this utility was primarily an exercise in C for the author and only intended to be a small and easy to use utility.
 
 ## Warning
 This code has not been audited and should be used with care.
