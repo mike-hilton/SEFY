@@ -6,7 +6,10 @@ It is capable of generating and saving a key pair (private- and public key), use
 
 ## Purpose
 Function as a lightweight encryption utility where the binary and the user's public key could be distributed to different systems to be used for encrypting files without the need to expose a password or private key to that system.
- 
+
+## How to
+[![asciicast](https://asciinema.org/a/Chv2QPLtIhfjUSHY8g6W4CAh0.svg)](https://asciinema.org/a/Chv2QPLtIhfjUSHY8g6W4CAh0)
+
 ## Encryption
 This utility uses Libsodium that is a fork of [NaCl](http://nacl.cr.yp.to/). It utilize [XSalsa20](https://en.wikipedia.org/wiki/Salsa20#XSalsa20_with_192-bit_nonce) for public key encryption and [Poly1305](https://en.wikipedia.org/wiki/Poly1305) for data integrity.
 
