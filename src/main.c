@@ -39,15 +39,15 @@ typedef struct _options
 {
   bool c;       /* -c flag: specify path to configuration file */
   char *configuration_file; /* path to configuration file */
-  bool d;       /*  -d flag: decrypt file */
-  bool e;       /*  -e flag: encrypt file */
-  bool f;       /*  -f flag: force overwrite if file exits */
-  bool h;       /*  -h flag: print usage information */
-  bool i;       /*  -i flag: generate and save a new key pair */ 
-  bool o;       /*  -o flag: specify output location of encrypted/decrypted file */
-  char *output_file;
-  bool p;       /*  -p flag: print Base64 encoded public key */
-  bool s;       /*  -s flag: overwritens and delete original file after encryption */
+  bool d;       /* -d flag: decrypt file */
+  bool e;       /* -e flag: encrypt file */
+  bool f;       /* -f flag: force overwrite if file exits */
+  bool h;       /* -h flag: print usage information */
+  bool i;       /* -i flag: generate and save a new key pair */ 
+  bool o;       /* -o flag: specify output location of encrypted/decrypted file */
+  char *output_file; /* path to output file */
+  bool p;       /* -p flag: print Base64 encoded public key */
+  bool s;       /* -s flag: overwritens and delete original file after encryption */
   bool optError; /* true if error during command line parsing */
 
 } Options;
@@ -527,21 +527,20 @@ encrypt_file(unsigned char *server_publickey, const char *file_src, char *file_d
 
     if ( file_dst == NULL )
     {
-        file_dst = (char*) malloc(strlen(filename_src_base) + strlen(FILENAME_EXTENSION) + 1);
+        char *tmp_file_dst[strlen(filename_src_base) + strlen(FILENAME_EXTENSION) + 1];
+        file_dst = *tmp_file_dst;
         strcpy(file_dst, filename_src_base);
         strcat(file_dst, FILENAME_EXTENSION);
     }
 
     if ( strlen(file_dst) > MAX_LEN_PATH - 1 )
     {
-        free(file_dst);
         error_exit("Output filename/path too long");
     }
     if ( (file_size = read_file(&data, file_src)) == 0 )
     {
         if ( data != NULL )
             sodium_free(data);
-        free(file_dst);
         error_exit("Failed to read file");
     }
 
@@ -550,7 +549,6 @@ encrypt_file(unsigned char *server_publickey, const char *file_src, char *file_d
     if ( crypto_box_seal(ciphertext, data, file_size, server_publickey) != 0 )
     {
         sodium_free(data);
-        free(file_dst);
         error_exit("Encryption failed");
     }
 
@@ -558,12 +556,10 @@ encrypt_file(unsigned char *server_publickey, const char *file_src, char *file_d
 
     if ( write_file(ciphertext, ciphertext_length, file_dst, "wb") < ciphertext_length )
     {
-        free(file_dst);
         error_exit("Failed to write file");
     }
     
     printf("Encrypted content of file %s and saved it to: %s\n", file_src, file_dst);
-    free(file_dst);
 }
 
 void
