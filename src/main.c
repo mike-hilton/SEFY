@@ -253,7 +253,7 @@ read_file(unsigned char **data, const char *file_src)
 {
     /*
      * Allocates memory and points data to it, then puts the file content there.
-     * Caller is responsible to free the memory when done.
+     * It is upon the caller to free the allocated buffer DATA with sodium_free().
      * Returns the file's size in bytes if successful, otherwise 0.
      */
     size_t file_size = 0;
@@ -478,13 +478,23 @@ decrypt_file(const unsigned char *server_publickey, const unsigned char *server_
     size_t file_size;
     size_t ciphertext_length;
     unsigned char *ciphertext_from_file = NULL;
+    
     if ( (file_size = read_file(&ciphertext_from_file, file_src)) == 0 )
+    {
         error_exit("Failed to read file");
+        if ( ciphertext_from_file != NULL )
+            sodium_free(ciphertext_from_file);
+    }
+
     ciphertext_length = (file_size - crypto_box_SEALBYTES);
     unsigned char decrypted[ciphertext_length];
 
-    if ( crypto_box_seal_open(decrypted, ciphertext_from_file, file_size, server_publickey, server_secretkey) != 0 ) 
+    if ( crypto_box_seal_open(decrypted, ciphertext_from_file, file_size, server_publickey, server_secretkey) != 0 )
+    {
         error_exit("Decryption failed");
+        sodium_free(ciphertext_from_file);
+    }
+
     sodium_free(ciphertext_from_file);
 
     if ( strncmp(file_dst, "-", strlen(file_dst)) == 0 )
@@ -495,7 +505,9 @@ decrypt_file(const unsigned char *server_publickey, const unsigned char *server_
     else    
     {
         if ( write_file(decrypted, ciphertext_length, file_dst, "wb") < ciphertext_length )
+        {
             error_exit("Failed to write file");
+        }
         else
             printf("Decrypted content of file %s and saved it to: %s\n", file_src, file_dst);
     }
@@ -522,11 +534,13 @@ encrypt_file(unsigned char *server_publickey, const char *file_src, char *file_d
 
     if ( strlen(file_dst) > MAX_LEN_PATH - 1 )
     {
-        free(file_dst);
+        sodium_free(file_dst);
         error_exit("Output filename/path too long");
     }
     if ( (file_size = read_file(&data, file_src)) == 0 )
     {
+        if ( data != NULL )
+            sodium_free(data);
         free(file_dst);
         error_exit("Failed to read file");
     }
@@ -535,6 +549,7 @@ encrypt_file(unsigned char *server_publickey, const char *file_src, char *file_d
     unsigned char ciphertext[ciphertext_length];
     if ( crypto_box_seal(ciphertext, data, file_size, server_publickey) != 0 )
     {
+        sodium_free(data);
         free(file_dst);
         error_exit("Encryption failed");
     }
