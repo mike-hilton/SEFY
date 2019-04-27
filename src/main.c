@@ -107,6 +107,40 @@ b64_decode(unsigned char **data, const char *b64_data, size_t b64_data_length)
 }
 
 int 
+is_ok_file(const char *file_path, int type)
+{
+    /*
+     * Determines if FILE_PATH is ok to write to by evaluating file permissions 
+     * and type of file.
+     * If regular file or if file does not exist return 1, on fail return 0.
+     */
+    struct stat st;
+
+    /* 
+     * Get information about file and save it to ST buffer.
+     * If file does not exist return with success.
+     */
+    if ( stat(file_path, &st) != 0 )
+    {
+        return 1;
+    }
+
+    /* Check if file is a "regular file" */
+    if ( ( ! S_ISREG(st.st_mode) ) || S_ISSOCK(st.st_mode) || S_ISCHR(st.st_mode) || S_ISDIR(st.st_mode) ||  S_ISFIFO(st.st_mode) || S_ISLNK(st.st_mode) )
+    {
+        return 0;
+    }
+
+    /* Check if process has correct permissions on FILE_PATH */
+    if ( access(file_path, type) != 0 )
+    {
+        return 0;
+    }
+
+    return 1;
+}
+
+int 
 overwrite_pass(int fd, char *buffer, size_t buffer_length, off_t file_size, size_t iteration)
 {
     /*
@@ -165,17 +199,16 @@ overwrite_file(const char *filename)
     char *buffer;
     int fd;
 
+    if ( ! is_ok_file(filename, W_OK) )
+        return 1;
+
     fd = open(filename, O_WRONLY | O_NOCTTY | 0);
     if ( fstat(fd, &st) != 0 )
     {
         close(fd);
         return 1;
     }
-    if ( (S_ISCHR (st.st_mode) && isatty(fd)) || S_ISFIFO(st.st_mode) || S_ISLNK(st.st_mode) )
-    {
-        close(fd);
-        return 1;
-    }
+
     if ( (file_size = st.st_size) == 0 )
     {
         close(fd);
@@ -220,7 +253,10 @@ write_file(unsigned char *data, size_t data_length, const char *file_dst, const 
      * Returns byte written on success, and 0 on failure.
      */
     FILE *fp;
-    
+
+    if ( ! is_ok_file(file_dst, W_OK) )
+        return 0;
+
     if ( strlen(file_dst) > MAX_LEN_PATH - 1 )
         return 0;  
     if ( access(file_dst, F_OK) == 0 && FORCE_FLAG == false )
@@ -259,6 +295,9 @@ read_file(unsigned char **data, const char *file_src)
     size_t file_size = 0;
     FILE *fp;
     
+    if ( ! is_ok_file(file_src, R_OK) )
+        return 0;
+
     fp = fopen(file_src, "rb");
     if ( fp == NULL )
         return 0;
@@ -313,6 +352,9 @@ config_file_load(Config *config, const char *config_file)
     char *buffer = NULL;
     FILE *fp;
     
+    if ( ! is_ok_file(config_file, R_OK) )
+        return 1;
+
     fp = fopen(config_file, "r");
     if ( fp == NULL )
     {
@@ -407,6 +449,9 @@ config_create(const char *file_dst)
     size_t data_length;
     char *data = (char*) sodium_malloc(128);
     FILE *fp = NULL;
+
+    if ( ! is_ok_file(file_dst, W_OK) )
+        return 1;
 
     /* Generates the actual key pair */
     crypto_box_keypair(publickey, secretkey);
