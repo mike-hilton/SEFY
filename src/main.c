@@ -514,7 +514,7 @@ decrypt_file(const unsigned char *server_publickey, const unsigned char *server_
 }
 
 void 
-encrypt_file(unsigned char *server_publickey, const char *file_src, char *file_dst)
+encrypt_file(unsigned char *server_publickey, const char *file_src, char *flags_output_file)
 {
     /*
      * Encrypts the content of FILE_SRC with SERVER_PUBLICKEY and saves the result
@@ -523,24 +523,31 @@ encrypt_file(unsigned char *server_publickey, const char *file_src, char *file_d
     size_t file_size;
     size_t ciphertext_length;
     char *filename_src_base = basename((char*)file_src);
+    char *file_dst;
     unsigned char *data;
 
-    if ( file_dst == NULL )
+    if ( flags_output_file == NULL )
     {
-        char *tmp_file_dst[strlen(filename_src_base) + strlen(FILENAME_EXTENSION) + 1];
-        file_dst = *tmp_file_dst;
+        file_dst = (char*) malloc(strlen(filename_src_base) + strlen(FILENAME_EXTENSION) + 1);
         strcpy(file_dst, filename_src_base);
         strcat(file_dst, FILENAME_EXTENSION);
+    }
+    else
+    {
+        file_dst = (char*) malloc(strlen(flags_output_file) +1);
+        strcpy(file_dst, flags_output_file);
     }
 
     if ( strlen(file_dst) > MAX_LEN_PATH - 1 )
     {
+        free(file_dst);
         error_exit("Output filename/path too long");
     }
     if ( (file_size = read_file(&data, file_src)) == 0 )
     {
         if ( data != NULL )
             sodium_free(data);
+        free(file_dst);
         error_exit("Failed to read file");
     }
 
@@ -548,6 +555,7 @@ encrypt_file(unsigned char *server_publickey, const char *file_src, char *file_d
     unsigned char ciphertext[ciphertext_length];
     if ( crypto_box_seal(ciphertext, data, file_size, server_publickey) != 0 )
     {
+        free(file_dst);
         sodium_free(data);
         error_exit("Encryption failed");
     }
@@ -556,10 +564,13 @@ encrypt_file(unsigned char *server_publickey, const char *file_src, char *file_d
 
     if ( write_file(ciphertext, ciphertext_length, file_dst, "wb") < ciphertext_length )
     {
+        free(file_dst);
         error_exit("Failed to write file");
     }
     
     printf("Encrypted content of file %s and saved it to: %s\n", file_src, file_dst);
+
+    free(file_dst);
 }
 
 void
