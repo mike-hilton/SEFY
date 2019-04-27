@@ -354,7 +354,6 @@ config_file_load(Config *config, const char *config_file)
         {
             if ( b64_decode(&b64decoded_value, config_value, strlen(config_value)) != 0 )
             {
-                printf("pub: %s\n", b64decoded_value);
                 error++;
                 break;
             }
@@ -362,6 +361,12 @@ config_file_load(Config *config, const char *config_file)
             memcpy(config->publickey_b64, config_value, 63);
             sodium_free(b64decoded_value);
         }
+        else
+        {
+            error++;
+            break;
+        }
+        
     }
 
     free(buffer);
