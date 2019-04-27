@@ -655,9 +655,7 @@ main(int argc, char *argv[])
 
     /* Make sure sodium gets properly loaded */
     if ( sodium_init() < 0 ) 
-    {
         error_exit("Could not initialize libsodium");
-    }
 
     while ((c = getopt (argc, argv, "c:defhio:ps")) != -1)
     {
@@ -768,9 +766,7 @@ main(int argc, char *argv[])
 
     /* Check that the user has supplied a filename */
     if ( n_files != 1 )
-    {
         error_exit("No file specified");
-    }
 
     /* Encrypt */
     if ( flags.e )
