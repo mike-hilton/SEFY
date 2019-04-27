@@ -311,8 +311,9 @@ config_file_load(Config *config, const char *config_file)
     const char delimiter[2] = " ";
     unsigned char *b64decoded_value = NULL;
     char *buffer = NULL;
-
-    FILE *fp = fopen(config_file, "r");
+    FILE *fp;
+    
+    fp = fopen(config_file, "r");
     if ( fp == NULL )
     {
         if ( errno == 2 )
