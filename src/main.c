@@ -534,7 +534,7 @@ encrypt_file(unsigned char *server_publickey, const char *file_src, char *file_d
 
     if ( strlen(file_dst) > MAX_LEN_PATH - 1 )
     {
-        sodium_free(file_dst);
+        free(file_dst);
         error_exit("Output filename/path too long");
     }
     if ( (file_size = read_file(&data, file_src)) == 0 )
