@@ -71,9 +71,9 @@ char*
 b64_encode(char **b64_data, unsigned char * const data, size_t data_length)
 {
     /*
-     * Base64 decodes the content of B64_DATA and saves the result to DATA. 
-     * It is upon the caller to free the allocated buffer with sodium_free().
-     * Returns a char pointer to an char array on success, and NULL if failed. 
+     * Base64 encodes the content of DATA and saves the result to B64_DATA. 
+     * It is upon the caller to free the allocated buffer B64_DATA with sodium_free().
+     * Returns pointer to B64_DATA on success, and NULL if failed.
      */
     size_t b64_maxlen;
 
@@ -91,16 +91,18 @@ int
 b64_decode(unsigned char **data, const char *b64_data, size_t b64_data_length)
 {
     /*
-     * Base64 encodes the content of DATA and saves the result to B64_DATA. 
-     * It is upon the caller to free the allocated buffer with sodium_free().
+     * Base64 decodes the content of B64_DATA and saves the result to DATA. 
+     * It is upon the caller to free the allocated buffer DATA with sodium_free().
      * Returns 0 on success, and -1 if failed.
      */
     size_t data_length;
     data_length = (b64_data_length / 4) * 3;
+
     *data = (unsigned char*) sodium_malloc(data_length+1);
     if ( *data == NULL )
         return -1;
     memset(*data, 0, data_length);
+
     return sodium_base642bin(*data, data_length, b64_data, b64_data_length, NULL, &data_length, NULL, sodium_base64_VARIANT_ORIGINAL);
 }
 
