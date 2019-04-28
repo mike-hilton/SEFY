@@ -554,7 +554,7 @@ decrypt_file(const unsigned char *server_publickey, const unsigned char *server_
             error_exit("Failed to write decrypted content to destination file");
         }
         else
-            printf("Decrypted content saved to %s\n", file_src, file_dst);
+            printf("Decrypted content saved to %s\n", file_dst);
     }
 }
 
