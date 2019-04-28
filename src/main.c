@@ -126,7 +126,7 @@ is_ok_file(const char *file_path, int type)
     }
 
     /* Check if file is a "regular file" */
-    if ( ( ! S_ISREG(st.st_mode) ) || S_ISSOCK(st.st_mode) || S_ISCHR(st.st_mode) || S_ISDIR(st.st_mode) ||  S_ISFIFO(st.st_mode) || S_ISLNK(st.st_mode) )
+    if ( ( ! S_ISREG(st.st_mode) ) || S_ISLNK(st.st_mode) || S_ISCHR(st.st_mode) || S_ISDIR(st.st_mode) ||  S_ISFIFO(st.st_mode) || S_ISLNK(st.st_mode) )
     {
         return 0;
     }
