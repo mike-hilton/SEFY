@@ -551,10 +551,10 @@ decrypt_file(const unsigned char *server_publickey, const unsigned char *server_
     {
         if ( write_file(decrypted, ciphertext_length, file_dst, "wb") < ciphertext_length )
         {
-            error_exit("Failed to write file");
+            error_exit("Failed to write decrypted content to destination file");
         }
         else
-            printf("Decrypted content of file %s and saved it to: %s\n", file_src, file_dst);
+            printf("Decrypted content saved to %s\n", file_src, file_dst);
     }
 }
 
@@ -616,9 +616,9 @@ encrypt_file(unsigned char *server_publickey, const char *file_src, char *flags_
         if ( write_file(ciphertext, ciphertext_length, file_dst, "wb") < ciphertext_length )
         {
             free(file_dst);
-            error_exit("Failed to write file");
+            error_exit("Failed to write encrypted content to destination file");
         }
-        printf("Encrypted content of file %s and saved it to: %s\n", file_src, file_dst);
+        printf("Encrypted content saved to %s\n", file_dst);
     }
 
     free(file_dst);
