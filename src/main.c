@@ -606,14 +606,20 @@ encrypt_file(unsigned char *server_publickey, const char *file_src, char *flags_
     }
 
     sodium_free(data);
-
-    if ( write_file(ciphertext, ciphertext_length, file_dst, "wb") < ciphertext_length )
+    if ( strncmp(file_dst, "-", strlen(file_dst)) == 0 )
     {
-        free(file_dst);
-        error_exit("Failed to write file");
+        for(size_t i = 0; i < ciphertext_length; i++)
+            printf("%c", ciphertext[i]);
     }
-    
-    printf("Encrypted content of file %s and saved it to: %s\n", file_src, file_dst);
+    else
+    {
+        if ( write_file(ciphertext, ciphertext_length, file_dst, "wb") < ciphertext_length )
+        {
+            free(file_dst);
+            error_exit("Failed to write file");
+        }
+        printf("Encrypted content of file %s and saved it to: %s\n", file_src, file_dst);
+    }
 
     free(file_dst);
 }
