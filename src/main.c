@@ -748,7 +748,10 @@ main(int argc, char *argv[])
     int return_value = config_file_load(&config, config_file);
     free(config_file);
     if ( return_value == -1 )
-        error_exit("Configuration file not found");
+    {
+        fprintf(stderr, "Error: Configuration file not found\nSpecify path with '-c' or generate a new key pair with '-i'");
+        return 1;
+    }
     else if ( return_value == 1 )
         error_exit("Failed to read configuration file");
 
