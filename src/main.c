@@ -760,7 +760,7 @@ main(int argc, char *argv[])
     free(config_file);
     if ( return_value == -1 )
     {
-        fprintf(stderr, "Error: Configuration file not found\nSpecify path with '-c' or generate a new key pair with '-i'");
+        fprintf(stderr, "Error: Configuration file not found\nSpecify path with '-c' or generate a new key pair with '-i'\n");
         return 1;
     }
     else if ( return_value == 1 )
