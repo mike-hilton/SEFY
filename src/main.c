@@ -13,7 +13,7 @@
  *      2019-04-16  
  * 
  */
-#include <sodium.h>     // crypto_box_keypair, crypto_box_seal, crypto_box_seal_open, sodium_malloc, 
+#include <sodium.h>     // crypto_box_keypair, crypto_box_seal, crypto_box_seal_open, malloc, 
                         // sodium_base642bin, sodium_bin2base64, sodium_base64_ENCODED_LEN
 #include <stdio.h>      // printf, fprintf, fgets, snprintf, fopen, fwrite, fread, ftell, rewind
 #include <string.h>     // memset, strcpy, strlen, strcmp, strtok, strcat, strcspn
@@ -72,13 +72,13 @@ b64_encode(char **b64_data, unsigned char * const data, size_t data_length)
 {
     /*
      * Base64 encodes the content of DATA and saves the result to B64_DATA. 
-     * It is upon the caller to free the allocated buffer B64_DATA with sodium_free().
+     * It is upon the caller to free the allocated buffer B64_DATA with free().
      * Returns pointer to B64_DATA on success, and NULL if failed.
      */
     size_t b64_maxlen;
 
     b64_maxlen = sodium_base64_ENCODED_LEN(data_length, sodium_base64_VARIANT_ORIGINAL);
-    *b64_data = (char*) sodium_malloc(b64_maxlen);
+    *b64_data = (char*) malloc(b64_maxlen);
     if ( *b64_data == NULL )
         return NULL;
 
@@ -92,13 +92,13 @@ b64_decode(unsigned char **data, const char *b64_data, size_t b64_data_length)
 {
     /*
      * Base64 decodes the content of B64_DATA and saves the result to DATA. 
-     * It is upon the caller to free the allocated buffer DATA with sodium_free().
+     * It is upon the caller to free the allocated buffer DATA with free().
      * Returns 0 on success, and -1 if failed.
      */
     size_t data_length;
     data_length = (b64_data_length / 4) * 3;
 
-    *data = (unsigned char*) sodium_malloc(data_length+1);
+    *data = (unsigned char*) malloc(data_length+1);
     if ( *data == NULL )
         return -1;
     memset(*data, 0, data_length);
@@ -289,7 +289,7 @@ read_file(unsigned char **data, const char *file_src)
 {
     /*
      * Allocates memory and points data to it, then puts the file content there.
-     * It is upon the caller to free the allocated buffer DATA with sodium_free().
+     * It is upon the caller to free the allocated buffer DATA with free().
      * Returns the file's size in bytes if successful, otherwise 0.
      */
     size_t file_size = 0;
@@ -311,13 +311,13 @@ read_file(unsigned char **data, const char *file_src)
      * A better solution would be to read and perform operations
      * on chunks rather then a whole file..
      */
-    if ( file_size > 1000000000 )
+    if ( file_size > 1073741824 )
     {
         fclose(fp);
         return 0;
     }
 
-    *data = (unsigned char*) sodium_malloc(file_size);
+    *data = (unsigned char*) malloc(file_size);
     if ( *data == NULL )
     {
         fclose(fp);
@@ -390,7 +390,7 @@ config_file_load(Config *config, const char *config_file)
                 break;
             }
             memcpy(config->secretkey, b64decoded_value, crypto_box_SECRETKEYBYTES);
-            sodium_free(b64decoded_value);
+            free(b64decoded_value);
         }
         else if ( strncmp("publickey", config_key, strlen("publickey")) == 0 )
         {
@@ -401,7 +401,7 @@ config_file_load(Config *config, const char *config_file)
             }
             memcpy(config->publickey, b64decoded_value, crypto_box_PUBLICKEYBYTES);
             memcpy(config->publickey_b64, config_value, 63);
-            sodium_free(b64decoded_value);
+            free(b64decoded_value);
         }
         else
         {
@@ -427,9 +427,9 @@ config_create_free(char *b64_secretkey, char *b64_publickey, char *data, FILE *f
      * Helper function for config_create() that free all the buffers, 
      * and close the file handle.
      */
-    sodium_free(b64_secretkey);
-    sodium_free(b64_publickey);
-    sodium_free(data);
+    free(b64_secretkey);
+    free(b64_publickey);
+    free(data);
     if ( fp != NULL )
         fclose(fp);
 }
@@ -447,7 +447,7 @@ config_create(const char *file_dst)
     char *b64_publickey;
     char *b64_secretkey;
     size_t data_length;
-    char *data = (char*) sodium_malloc(128);
+    char *data = (char*) malloc(128);
     FILE *fp = NULL;
 
     if ( ! is_ok_file(file_dst, W_OK) )
@@ -523,24 +523,32 @@ decrypt_file(const unsigned char *server_publickey, const unsigned char *server_
     size_t file_size;
     size_t ciphertext_length;
     unsigned char *ciphertext_from_file = NULL;
-    
+    unsigned char *decrypted = NULL;
+
     if ( (file_size = read_file(&ciphertext_from_file, file_src)) == 0 )
     {
         error_exit("Failed to read file");
         if ( ciphertext_from_file != NULL )
-            sodium_free(ciphertext_from_file);
+            free(ciphertext_from_file);
     }
 
     ciphertext_length = (file_size - crypto_box_SEALBYTES);
-    unsigned char decrypted[ciphertext_length];
+    
+    if ( (decrypted = (unsigned char*) malloc(ciphertext_length)) == NULL )
+    {
+        free(ciphertext_from_file);
+        error_exit("Decryption failed");
+    }
 
     if ( crypto_box_seal_open(decrypted, ciphertext_from_file, file_size, server_publickey, server_secretkey) != 0 )
     {
+        free(decrypted);
+        free(ciphertext_from_file);
         error_exit("Decryption failed");
-        sodium_free(ciphertext_from_file);
+
     }
 
-    sodium_free(ciphertext_from_file);
+    free(ciphertext_from_file);
 
     if ( strncmp(file_dst, "-", strlen(file_dst)) == 0 )
     {
@@ -551,11 +559,13 @@ decrypt_file(const unsigned char *server_publickey, const unsigned char *server_
     {
         if ( write_file(decrypted, ciphertext_length, file_dst, "wb") < ciphertext_length )
         {
+            free(decrypted);
             error_exit("Failed to write decrypted content to destination file");
         }
         else
             printf("Decrypted content saved to %s\n", file_dst);
     }
+    free(decrypted);
 }
 
 void 
@@ -592,7 +602,7 @@ encrypt_file(unsigned char *server_publickey, const char *file_src, char *flags_
     if ( (file_size = read_file(&data, file_src)) == 0 )
     {
         if ( data != NULL )
-            sodium_free(data);
+            free(data);
         free(file_dst);
         error_exit("Failed to read file");
     }
@@ -602,18 +612,18 @@ encrypt_file(unsigned char *server_publickey, const char *file_src, char *flags_
     if ( ciphertext == NULL )
     {
         free(file_dst);
-        sodium_free(data);
+        free(data);
         error_exit("Encryption failed");
     }
     if ( crypto_box_seal(ciphertext, data, file_size, server_publickey) != 0 )
     {
         free(ciphertext);
         free(file_dst);
-        sodium_free(data);
+        free(data);
         error_exit("Encryption failed");
     }
 
-    sodium_free(data);
+    free(data);
     
     if ( strncmp(file_dst, "-", strlen(file_dst)) == 0 )
     {
