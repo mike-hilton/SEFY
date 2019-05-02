@@ -569,7 +569,8 @@ encrypt_file(unsigned char *server_publickey, const char *file_src, char *flags_
     size_t ciphertext_length;
     char *filename_src_base = basename((char*)file_src);
     char *file_dst;
-    unsigned char *data;
+    unsigned char *data = NULL;
+    unsigned char *ciphertext = NULL;
 
     if ( flags_output_file == NULL )
     {
@@ -597,15 +598,23 @@ encrypt_file(unsigned char *server_publickey, const char *file_src, char *flags_
     }
 
     ciphertext_length = (crypto_box_SEALBYTES + file_size);
-    unsigned char ciphertext[ciphertext_length];
+    ciphertext = (unsigned char*) malloc(ciphertext_length);
+    if ( ciphertext == NULL )
+    {
+        free(file_dst);
+        sodium_free(data);
+        error_exit("Encryption failed");
+    }
     if ( crypto_box_seal(ciphertext, data, file_size, server_publickey) != 0 )
     {
+        free(ciphertext);
         free(file_dst);
         sodium_free(data);
         error_exit("Encryption failed");
     }
 
     sodium_free(data);
+    
     if ( strncmp(file_dst, "-", strlen(file_dst)) == 0 )
     {
         for(size_t i = 0; i < ciphertext_length; i++)
@@ -615,12 +624,14 @@ encrypt_file(unsigned char *server_publickey, const char *file_src, char *flags_
     {
         if ( write_file(ciphertext, ciphertext_length, file_dst, "wb") < ciphertext_length )
         {
+            free(ciphertext);
             free(file_dst);
             error_exit("Failed to write encrypted content to destination file");
         }
         printf("Encrypted content saved to %s\n", file_dst);
     }
 
+    free(ciphertext);
     free(file_dst);
 }
 
