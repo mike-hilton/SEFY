@@ -608,8 +608,7 @@ encrypt_file(unsigned char *server_publickey, const char *file_src, char *flags_
     }
 
     ciphertext_length = (crypto_box_SEALBYTES + file_size);
-    ciphertext = (unsigned char*) malloc(ciphertext_length);
-    if ( ciphertext == NULL )
+    if ( (ciphertext = (unsigned char*) malloc(ciphertext_length)) == NULL )
     {
         free(file_dst);
         free(data);
