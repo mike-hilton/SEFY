@@ -311,7 +311,7 @@ read_file(unsigned char **data, const char *file_src)
      * A better solution would be to read and perform operations
      * on chunks rather then a whole file..
      */
-    if ( file_size > 1000000000 )
+    if ( file_size > 1073741824 )
     {
         fclose(fp);
         return 0;
